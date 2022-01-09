@@ -21,10 +21,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.CountDownTimer
 import android.os.SystemClock
+import android.text.format.DateUtils
 import androidx.core.app.AlarmManagerCompat
 import androidx.lifecycle.*
-import com.example.android.eggtimernotifications.receiver.AlarmReceiver
 import com.example.android.eggtimernotifications.R
+import com.example.android.eggtimernotifications.receiver.AlarmReceiver
 import kotlinx.coroutines.*
 
 class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
@@ -32,10 +33,6 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private const val REQUEST_CODE = 0
         private const val TRIGGER_TIME = "TRIGGER_AT"
-
-        private const val ONE_MINUTE: Long = 60_000L
-        private const val ONE_SECOND: Long = 1_000L
-
         private const val PREFS_NAME = "com.example.android.eggtimernotifications"
     }
 
@@ -123,14 +120,14 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun getTimerIntervalInMillis(timerLengthSelection: Int) = when (timerLengthSelection) {
-        0 -> ONE_SECOND * 10 //For testing only
-        else -> timerLengthOptions[timerLengthSelection] * ONE_MINUTE
+        0 -> DateUtils.SECOND_IN_MILLIS * 10 //For testing only
+        else -> timerLengthOptions[timerLengthSelection] * DateUtils.MINUTE_IN_MILLIS
     }
 
     private fun createTimer() {
         viewModelScope.launch {
             val triggerTime = loadTime()
-            timer = object : CountDownTimer(triggerTime, ONE_SECOND) {
+            timer = object : CountDownTimer(triggerTime, DateUtils.SECOND_IN_MILLIS) {
                 override fun onTick(millisUntilFinished: Long) {
                     _elapsedTime.value = triggerTime - SystemClock.elapsedRealtime()
                     if (_elapsedTime.value!! <= 0) {
