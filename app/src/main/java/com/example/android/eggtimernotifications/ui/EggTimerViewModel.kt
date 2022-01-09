@@ -35,14 +35,15 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
 
         private const val ONE_MINUTE: Long = 60_000L
         private const val ONE_SECOND: Long = 1_000L
+
+        private const val PREFS_NAME = "com.example.android.eggtimernotifications"
     }
 
     private val timerLengthOptions: IntArray
     private val notifyPendingIntent: PendingIntent
 
     private val alarmManager = app.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    private var prefs =
-        app.getSharedPreferences("com.example.android.eggtimernotifications", Context.MODE_PRIVATE)
+    private var prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val notifyIntent = Intent(app, AlarmReceiver::class.java)
 
     private val _timeSelection = MutableLiveData<Int>()
