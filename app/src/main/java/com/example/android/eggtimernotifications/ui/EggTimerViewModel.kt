@@ -1,21 +1,24 @@
 package com.example.android.eggtimernotifications.ui
 
 import android.app.Application
+import android.app.NotificationManager
 import android.content.Context
 import android.os.CountDownTimer
 import android.os.SystemClock
 import android.text.format.DateUtils
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.android.eggtimernotifications.R
 import com.example.android.eggtimernotifications.service.AlarmService
+import com.example.android.eggtimernotifications.util.sendNotification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
+class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
 
     companion object {
         private const val TRIGGER_TIME = "TRIGGER_AT"
@@ -25,6 +28,7 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     private val timerLengthOptions: IntArray = app.resources.getIntArray(R.array.minutes_array)
     private val alarmService = AlarmService(app)
     private var prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private val notificationManager = ContextCompat.getSystemService(app, NotificationManager::class.java) as NotificationManager
 
     private lateinit var timer: CountDownTimer
 
@@ -68,6 +72,7 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
                 val triggerTime = SystemClock.elapsedRealtime() + selectedInterval
 
                 // TODO: Step 1.5 get an instance of NotificationManager and call sendNotification
+                notificationManager.sendNotification(app.getString(R.string.timer_running), app)
 
                 // TODO: Step 1.15 call cancel notification
 
