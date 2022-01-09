@@ -11,11 +11,7 @@ class AlarmService(private val context: Context) {
 
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private val notifyIntent = Intent(context, AlarmReceiver::class.java)
-    private var notifyPendingIntent: PendingIntent? = null
-
-    init {
-        notifyPendingIntent = getPendingIntent(PendingIntent.FLAG_NO_CREATE)
-    }
+    private var notifyPendingIntent: PendingIntent? = getPendingIntent(PendingIntent.FLAG_NO_CREATE)
 
     fun isAlarmOn(): Boolean {
         return notifyPendingIntent != null
