@@ -36,12 +36,11 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
         private const val PREFS_NAME = "com.example.android.eggtimernotifications"
     }
 
-    private val timerLengthOptions: IntArray
-    private val notifyPendingIntent: PendingIntent
-
+    private val timerLengthOptions: IntArray = app.resources.getIntArray(R.array.minutes_array)
     private val alarmManager = app.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private var prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     private val notifyIntent = Intent(app, AlarmReceiver::class.java)
+    private val notifyPendingIntent: PendingIntent
 
     private val _timeSelection = MutableLiveData<Int>()
     val timeSelection: LiveData<Int>
@@ -59,27 +58,14 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     private lateinit var timer: CountDownTimer
 
     init {
-        _isAlarmOn.value = PendingIntent.getBroadcast(
-            getApplication(),
-            REQUEST_CODE,
-            notifyIntent,
-            PendingIntent.FLAG_NO_CREATE
-        ) != null
+        _isAlarmOn.value = getPendingIntent(PendingIntent.FLAG_NO_CREATE) != null
 
-        notifyPendingIntent = PendingIntent.getBroadcast(
-            getApplication(),
-            REQUEST_CODE,
-            notifyIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT
-        )
-
-        timerLengthOptions = app.resources.getIntArray(R.array.minutes_array)
+        notifyPendingIntent = getPendingIntent(PendingIntent.FLAG_UPDATE_CURRENT)
 
         //If alarm is not null, resume the timer back for this alarm
         if (_isAlarmOn.value!!) {
             createTimer()
         }
-
     }
 
     fun setAlarm(isChecked: Boolean) {
@@ -92,6 +78,13 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     fun setTimeSelected(timerLengthSelection: Int) {
         _timeSelection.value = timerLengthSelection
     }
+
+    private fun getPendingIntent(flags: Int) = PendingIntent.getBroadcast(
+        getApplication(),
+        REQUEST_CODE,
+        notifyIntent,
+        flags
+    )
 
     private fun startTimer(timerLengthSelection: Int) {
         _isAlarmOn.value?.let {
