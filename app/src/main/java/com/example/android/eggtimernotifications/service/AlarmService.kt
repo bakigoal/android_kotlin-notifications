@@ -11,27 +11,25 @@ class AlarmService(private val context: Context) {
 
     private val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
     private val notifyIntent = Intent(context, AlarmReceiver::class.java)
-    private val notifyPendingIntent: PendingIntent
-    var isAlarmOn: Boolean
+    private var notifyPendingIntent: PendingIntent? = null
 
-    init {
-        isAlarmOn = getPendingIntent(PendingIntent.FLAG_NO_CREATE) != null
-        notifyPendingIntent = getPendingIntent(PendingIntent.FLAG_UPDATE_CURRENT)!!
-    }
+    fun isAlarmOn():Boolean = getPendingIntent(PendingIntent.FLAG_NO_CREATE) != null
 
     fun setAlarm(triggerTime: Long) {
+        notifyPendingIntent = getPendingIntent(PendingIntent.FLAG_UPDATE_CURRENT)
         AlarmManagerCompat.setExactAndAllowWhileIdle(
             alarmManager,
             AlarmManager.ELAPSED_REALTIME_WAKEUP,
             triggerTime,
-            notifyPendingIntent
+            notifyPendingIntent!!
         )
-        isAlarmOn = true
     }
 
     fun cancelAlarm() {
-        alarmManager.cancel(notifyPendingIntent)
-        isAlarmOn = false
+        notifyPendingIntent?.let {
+            alarmManager.cancel(it)
+            it.cancel()
+        }
     }
 
     private fun getPendingIntent(flags: Int): PendingIntent? {

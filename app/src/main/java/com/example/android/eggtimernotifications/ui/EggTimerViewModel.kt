@@ -42,7 +42,7 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     private lateinit var timer: CountDownTimer
 
     init {
-        _isAlarmOn.value = alarmService.isAlarmOn
+        _isAlarmOn.value = alarmService.isAlarmOn()
 
         //If alarm is not null, resume the timer back for this alarm
         if (_isAlarmOn.value!!) {
