@@ -67,13 +67,12 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
     private fun startTimer(timerLengthSelection: Int) {
         _isAlarmOn.value?.let {
             if (!it) {
-                _isAlarmOn.value = true
                 val selectedInterval = getTimerIntervalInMillis(timerLengthSelection)
                 val triggerTime = SystemClock.elapsedRealtime() + selectedInterval
 
                 notificationManager.cancelAll()
-
                 alarmService.setAlarm(triggerTime)
+                _isAlarmOn.value = true
 
                 viewModelScope.launch {
                     saveTime(triggerTime)
