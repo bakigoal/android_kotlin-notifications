@@ -28,7 +28,8 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
     private val timerLengthOptions: IntArray = app.resources.getIntArray(R.array.minutes_array)
     private val alarmService = AlarmService(app)
     private var prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val notificationManager = ContextCompat.getSystemService(app, NotificationManager::class.java) as NotificationManager
+    private val notificationManager =
+        ContextCompat.getSystemService(app, NotificationManager::class.java) as NotificationManager
 
     private lateinit var timer: CountDownTimer
 
