@@ -26,6 +26,9 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     private val alarmService = AlarmService(app)
     private var prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    private lateinit var timer: CountDownTimer
+
+    // LiveData properties
     private val _timeSelection = MutableLiveData<Int>()
     val timeSelection: LiveData<Int>
         get() = _timeSelection
@@ -38,12 +41,8 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     val isAlarmOn: LiveData<Boolean>
         get() = _isAlarmOn
 
-
-    private lateinit var timer: CountDownTimer
-
     init {
         _isAlarmOn.value = alarmService.isAlarmOn()
-
         //If alarm is not null, resume the timer back for this alarm
         if (_isAlarmOn.value!!) {
             createTimer()
@@ -82,19 +81,21 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
         createTimer()
     }
 
-    private fun getTimerIntervalInMillis(timerLengthSelection: Int) = when (timerLengthSelection) {
-        0 -> DateUtils.SECOND_IN_MILLIS * 10 //For testing only
-        else -> timerLengthOptions[timerLengthSelection] * DateUtils.MINUTE_IN_MILLIS
-    }
+    private fun getTimerIntervalInMillis(timerSelection: Int) =
+        when (timerSelection) {
+            0 -> DateUtils.SECOND_IN_MILLIS * 10 //For testing only
+            else -> timerLengthOptions[timerSelection] * DateUtils.MINUTE_IN_MILLIS
+        }
 
     private fun createTimer() {
         viewModelScope.launch {
             val triggerTime = loadTime()
             timer = object : CountDownTimer(triggerTime, DateUtils.SECOND_IN_MILLIS) {
+
                 override fun onTick(millisUntilFinished: Long) {
                     _elapsedTime.value = triggerTime - SystemClock.elapsedRealtime()
                     if (_elapsedTime.value!! <= 0) {
-                        resetTimer()
+                        onFinish()
                     }
                 }
 
@@ -114,22 +115,19 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
         alarmService.cancelAlarm()
     }
 
-    /**
-     * Resets the timer on screen and sets alarm value false
-     */
     private fun resetTimer() {
         timer.cancel()
         _elapsedTime.value = 0
         _isAlarmOn.value = false
     }
 
-    private suspend fun saveTime(triggerTime: Long) =
-        withContext(Dispatchers.IO) {
-            prefs.edit().putLong(TRIGGER_TIME, triggerTime).apply()
-        }
+    // Shared Preferences methods
 
-    private suspend fun loadTime(): Long =
-        withContext(Dispatchers.IO) {
-            prefs.getLong(TRIGGER_TIME, 0)
-        }
+    private suspend fun saveTime(triggerTime: Long) = withContext(Dispatchers.IO) {
+        prefs.edit().putLong(TRIGGER_TIME, triggerTime).apply()
+    }
+
+    private suspend fun loadTime(): Long = withContext(Dispatchers.IO) {
+        prefs.getLong(TRIGGER_TIME, 0)
+    }
 }
