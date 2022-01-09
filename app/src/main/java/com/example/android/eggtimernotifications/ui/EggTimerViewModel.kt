@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package com.example.android.eggtimernotifications.ui
 
 import android.app.*
@@ -22,20 +22,20 @@ import android.content.Intent
 import android.os.CountDownTimer
 import android.os.SystemClock
 import androidx.core.app.AlarmManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.*
 import com.example.android.eggtimernotifications.receiver.AlarmReceiver
 import com.example.android.eggtimernotifications.R
-import com.example.android.eggtimernotifications.util.sendNotification
 import kotlinx.coroutines.*
 
-class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
+class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val REQUEST_CODE = 0
-    private val TRIGGER_TIME = "TRIGGER_AT"
+    companion object {
+        private const val REQUEST_CODE = 0
+        private const val TRIGGER_TIME = "TRIGGER_AT"
 
-    private val minute: Long = 60_000L
-    private val second: Long = 1_000L
+        private const val ONE_MINUTE: Long = 60_000L
+        private const val ONE_SECOND: Long = 1_000L
+    }
 
     private val timerLengthOptions: IntArray
     private val notifyPendingIntent: PendingIntent
@@ -53,15 +53,15 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
     val elapsedTime: LiveData<Long>
         get() = _elapsedTime
 
-    private var _alarmOn = MutableLiveData<Boolean>()
+    private var _isAlarmOn = MutableLiveData<Boolean>()
     val isAlarmOn: LiveData<Boolean>
-        get() = _alarmOn
+        get() = _isAlarmOn
 
 
     private lateinit var timer: CountDownTimer
 
     init {
-        _alarmOn.value = PendingIntent.getBroadcast(
+        _isAlarmOn.value = PendingIntent.getBroadcast(
             getApplication(),
             REQUEST_CODE,
             notifyIntent,
@@ -78,17 +78,12 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
         timerLengthOptions = app.resources.getIntArray(R.array.minutes_array)
 
         //If alarm is not null, resume the timer back for this alarm
-        if (_alarmOn.value!!) {
+        if (_isAlarmOn.value!!) {
             createTimer()
         }
 
     }
 
-    /**
-     * Turns on or off the alarm
-     *
-     * @param isChecked, alarm status to be set.
-     */
     fun setAlarm(isChecked: Boolean) {
         when (isChecked) {
             true -> timeSelection.value?.let { startTimer(it) }
@@ -96,26 +91,15 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /**
-     * Sets the desired interval for the alarm
-     *
-     * @param timerLengthSelection, interval timerLengthSelection value.
-     */
     fun setTimeSelected(timerLengthSelection: Int) {
         _timeSelection.value = timerLengthSelection
     }
 
-    /**
-     * Creates a new alarm, notification and timer
-     */
     private fun startTimer(timerLengthSelection: Int) {
-        _alarmOn.value?.let {
+        _isAlarmOn.value?.let {
             if (!it) {
-                _alarmOn.value = true
-                val selectedInterval = when (timerLengthSelection) {
-                    0 -> second * 10 //For testing only
-                    else ->timerLengthOptions[timerLengthSelection] * minute
-                }
+                _isAlarmOn.value = true
+                val selectedInterval = getTimerIntervalInMillis(timerLengthSelection)
                 val triggerTime = SystemClock.elapsedRealtime() + selectedInterval
 
                 // TODO: Step 1.5 get an instance of NotificationManager and call sendNotification
@@ -137,13 +121,15 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
         createTimer()
     }
 
-    /**
-     * Creates a new timer
-     */
+    private fun getTimerIntervalInMillis(timerLengthSelection: Int) = when (timerLengthSelection) {
+        0 -> ONE_SECOND * 10 //For testing only
+        else -> timerLengthOptions[timerLengthSelection] * ONE_MINUTE
+    }
+
     private fun createTimer() {
         viewModelScope.launch {
             val triggerTime = loadTime()
-            timer = object : CountDownTimer(triggerTime, second) {
+            timer = object : CountDownTimer(triggerTime, ONE_SECOND) {
                 override fun onTick(millisUntilFinished: Long) {
                     _elapsedTime.value = triggerTime - SystemClock.elapsedRealtime()
                     if (_elapsedTime.value!! <= 0) {
@@ -173,7 +159,7 @@ class EggTimerViewModel(private val app: Application) : AndroidViewModel(app) {
     private fun resetTimer() {
         timer.cancel()
         _elapsedTime.value = 0
-        _alarmOn.value = false
+        _isAlarmOn.value = false
     }
 
     private suspend fun saveTime(triggerTime: Long) =
