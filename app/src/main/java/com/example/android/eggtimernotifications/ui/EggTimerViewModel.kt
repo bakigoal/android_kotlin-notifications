@@ -1,46 +1,30 @@
-/*
- * Copyright (C) 2019 Google Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.example.android.eggtimernotifications.ui
 
-import android.app.*
+import android.app.Application
 import android.content.Context
-import android.content.Intent
 import android.os.CountDownTimer
 import android.os.SystemClock
 import android.text.format.DateUtils
-import androidx.core.app.AlarmManagerCompat
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.android.eggtimernotifications.R
-import com.example.android.eggtimernotifications.receiver.AlarmReceiver
-import kotlinx.coroutines.*
+import com.example.android.eggtimernotifications.service.AlarmService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
 
     companion object {
-        private const val REQUEST_CODE = 0
         private const val TRIGGER_TIME = "TRIGGER_AT"
         private const val PREFS_NAME = "com.example.android.eggtimernotifications"
     }
 
     private val timerLengthOptions: IntArray = app.resources.getIntArray(R.array.minutes_array)
-    private val alarmManager = app.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    private val alarmService = AlarmService(app)
     private var prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val notifyIntent = Intent(app, AlarmReceiver::class.java)
-    private val notifyPendingIntent: PendingIntent
 
     private val _timeSelection = MutableLiveData<Int>()
     val timeSelection: LiveData<Int>
@@ -58,9 +42,7 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
     private lateinit var timer: CountDownTimer
 
     init {
-        _isAlarmOn.value = getPendingIntent(PendingIntent.FLAG_NO_CREATE) != null
-
-        notifyPendingIntent = getPendingIntent(PendingIntent.FLAG_UPDATE_CURRENT)
+        _isAlarmOn.value = alarmService.isAlarmOn
 
         //If alarm is not null, resume the timer back for this alarm
         if (_isAlarmOn.value!!) {
@@ -79,13 +61,6 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
         _timeSelection.value = timerLengthSelection
     }
 
-    private fun getPendingIntent(flags: Int) = PendingIntent.getBroadcast(
-        getApplication(),
-        REQUEST_CODE,
-        notifyIntent,
-        flags
-    )
-
     private fun startTimer(timerLengthSelection: Int) {
         _isAlarmOn.value?.let {
             if (!it) {
@@ -97,12 +72,7 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
 
                 // TODO: Step 1.15 call cancel notification
 
-                AlarmManagerCompat.setExactAndAllowWhileIdle(
-                    alarmManager,
-                    AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    triggerTime,
-                    notifyPendingIntent
-                )
+                alarmService.setAlarm(triggerTime)
 
                 viewModelScope.launch {
                     saveTime(triggerTime)
@@ -141,7 +111,7 @@ class EggTimerViewModel(app: Application) : AndroidViewModel(app) {
      */
     private fun cancelNotification() {
         resetTimer()
-        alarmManager.cancel(notifyPendingIntent)
+        alarmService.cancelAlarm()
     }
 
     /**
