@@ -1,6 +1,7 @@
 package com.example.android.eggtimernotifications.util
 
 import android.annotation.SuppressLint
+import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -19,35 +20,37 @@ fun Context.notificationManager() =
     ContextCompat.getSystemService(this, NotificationManager::class.java) as NotificationManager
 
 fun NotificationManager.sendNotification(messageBody: String, appContext: Context) {
+    notify(NOTIFICATION_ID, createNotification(messageBody, appContext))
+}
+
+fun createNotification(messageBody: String, appContext: Context): Notification {
     val builder = NotificationCompat.Builder(
         appContext,
         appContext.getString(R.string.egg_notification_channel_id)
     )
-        // TODO: Step 1.3 set title, text and icon to builder
+        // set title, text and icon
         .setSmallIcon(R.drawable.cooked_egg)
         .setContentTitle(appContext.getString(R.string.notification_title))
         .setContentText(messageBody)
 
-        // TODO: Step 1.13 set content intent
-        .setContentIntent(contentPendingIntent(appContext))
-        .setAutoCancel(true)
-
-        // TODO: Step 2.1 add style to builder
+        // add style
         .setStyle(bigPictureStyle(appContext))
         .setLargeIcon(getEggImage(appContext))
 
-        // TODO: Step 2.3 add snooze action
+        // set content intent
+        .setContentIntent(contentPendingIntent(appContext))
+        .setAutoCancel(true)
+
+        // add snooze action
         .addAction(
             R.drawable.egg_icon,
             appContext.getString(R.string.snooze),
             snoozePendingIntent(appContext)
         )
 
-        // TODO: Step 2.5 set priority
         .setPriority(NotificationCompat.PRIORITY_HIGH)
 
-
-    notify(NOTIFICATION_ID, builder.build())
+    return builder.build()
 }
 
 @SuppressLint("UnspecifiedImmutableFlag")
