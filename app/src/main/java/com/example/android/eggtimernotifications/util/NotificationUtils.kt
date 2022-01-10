@@ -1,11 +1,13 @@
 package com.example.android.eggtimernotifications.util
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.android.eggtimernotifications.MainActivity
 import com.example.android.eggtimernotifications.R
 import com.example.android.eggtimernotifications.receiver.SnoozeReceiver
@@ -15,12 +17,16 @@ private val NOTIFICATION_ID = 0
 private val REQUEST_CODE = 0
 private val FLAGS = 0
 
+fun Context.notificationManager() =
+    ContextCompat.getSystemService(this, NotificationManager::class.java) as NotificationManager
+
 // TODO: Step 1.1 extension function to send messages (GIVEN)
 /**
  * Builds and delivers the notification.
  *
  * @param context, activity context.
  */
+@SuppressLint("UnspecifiedImmutableFlag")
 fun NotificationManager.sendNotification(messageBody: String, applicationContext: Context) {
     // Create the content intent for the notification, which launches
     // this activity
