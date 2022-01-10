@@ -5,7 +5,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -13,57 +12,49 @@ import com.example.android.eggtimernotifications.MainActivity
 import com.example.android.eggtimernotifications.R
 import com.example.android.eggtimernotifications.receiver.SnoozeReceiver
 
-// Notification ID.
-private val NOTIFICATION_ID = 0
-private val REQUEST_CODE = 0
-private val FLAGS = 0
+private const val NOTIFICATION_ID = 0
+private const val REQUEST_CODE = 0
 
 fun Context.notificationManager() =
     ContextCompat.getSystemService(this, NotificationManager::class.java) as NotificationManager
 
-/**
- * Builds and delivers the notification.
- * @param context, activity context.
- */
-fun NotificationManager.sendNotification(messageBody: String, applicationContext: Context) {
-    val eggImage = getEggImage(applicationContext)
-
-    // Build the notification
+fun NotificationManager.sendNotification(messageBody: String, appContext: Context) {
     val builder = NotificationCompat.Builder(
-        applicationContext,
-        applicationContext.getString(R.string.egg_notification_channel_id)
+        appContext,
+        appContext.getString(R.string.egg_notification_channel_id)
     )
         // TODO: Step 1.3 set title, text and icon to builder
         .setSmallIcon(R.drawable.cooked_egg)
-        .setContentTitle(applicationContext.getString(R.string.notification_title))
+        .setContentTitle(appContext.getString(R.string.notification_title))
         .setContentText(messageBody)
 
         // TODO: Step 1.13 set content intent
-        .setContentIntent(contentPendingIntent(applicationContext))
+        .setContentIntent(contentPendingIntent(appContext))
         .setAutoCancel(true)
 
         // TODO: Step 2.1 add style to builder
-        .setStyle(bigPictureStyle(eggImage))
-        .setLargeIcon(eggImage)
+        .setStyle(bigPictureStyle(appContext))
+        .setLargeIcon(getEggImage(appContext))
 
         // TODO: Step 2.3 add snooze action
         .addAction(
             R.drawable.egg_icon,
-            applicationContext.getString(R.string.snooze),
-            snoozePendingIntent(applicationContext)
+            appContext.getString(R.string.snooze),
+            snoozePendingIntent(appContext)
         )
 
-    // TODO: Step 2.5 set priority
+        // TODO: Step 2.5 set priority
+        .setPriority(NotificationCompat.PRIORITY_HIGH)
 
 
     notify(NOTIFICATION_ID, builder.build())
 }
 
 @SuppressLint("UnspecifiedImmutableFlag")
-fun snoozePendingIntent(applicationContext: Context): PendingIntent {
-    val snoozeIntent = Intent(applicationContext, SnoozeReceiver::class.java)
+fun snoozePendingIntent(appContext: Context): PendingIntent {
+    val snoozeIntent = Intent(appContext, SnoozeReceiver::class.java)
     return PendingIntent.getBroadcast(
-        applicationContext,
+        appContext,
         REQUEST_CODE,
         snoozeIntent,
         PendingIntent.FLAG_ONE_SHOT
@@ -71,20 +62,20 @@ fun snoozePendingIntent(applicationContext: Context): PendingIntent {
 }
 
 @SuppressLint("UnspecifiedImmutableFlag")
-fun contentPendingIntent(applicationContext: Context): PendingIntent {
-    val contentIntent = Intent(applicationContext, MainActivity::class.java)
+fun contentPendingIntent(appContext: Context): PendingIntent {
+    val contentIntent = Intent(appContext, MainActivity::class.java)
     return PendingIntent.getActivity(
-        applicationContext,
+        appContext,
         NOTIFICATION_ID,
         contentIntent,
         PendingIntent.FLAG_UPDATE_CURRENT
     )
 }
 
-private fun bigPictureStyle(image: Bitmap?) =
+private fun bigPictureStyle(appContext: Context) =
     NotificationCompat.BigPictureStyle()
-        .bigPicture(image)
+        .bigPicture(getEggImage(appContext))
         .bigLargeIcon(null)
 
-private fun getEggImage(applicationContext: Context) =
-    BitmapFactory.decodeResource(applicationContext.resources, R.drawable.cooked_egg)
+private fun getEggImage(appContext: Context) =
+    BitmapFactory.decodeResource(appContext.resources, R.drawable.cooked_egg)
